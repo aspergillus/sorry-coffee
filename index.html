@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>I'm Sorry</title>
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;overflow:hidden;font-family:system-ui,"Segoe UI",sans-serif;color:#fff}
+  body{background:linear-gradient(135deg,#ff9a9e,#a18cd1,#fbc2eb);background-size:300% 300%;animation:bg 14s ease infinite}
+  @keyframes bg{50%{background-position:100% 100%}}
+  .float{position:fixed;bottom:-40px;font-size:24px;opacity:.6;pointer-events:none;animation:rise linear forwards}
+  @keyframes rise{to{transform:translateY(-110vh) rotate(40deg);opacity:0}}
+  #card{position:absolute;inset:0;margin:auto;width:min(92vw,520px);height:fit-content;padding:40px 32px;text-align:center;
+    background:rgba(255,255,255,.18);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.4);border-radius:28px;
+    box-shadow:0 20px 60px rgba(0,0,0,.2);animation:in .6s cubic-bezier(.2,.9,.3,1.2)}
+  @keyframes in{from{opacity:0;transform:translateY(30px) scale(.95)}}
+  .emoji{font-size:64px;animation:bob 2s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-10px)}}
+  h1{font-size:clamp(22px,5vw,30px);margin:16px 0 8px;text-shadow:0 2px 8px rgba(0,0,0,.2)}
+  p{opacity:.92;line-height:1.5;margin-bottom:28px}
+  .btns{display:flex;gap:16px;justify-content:center;min-height:52px}
+  button{font:inherit;font-weight:600;border:0;border-radius:999px;padding:14px 34px;cursor:pointer;transition:transform .15s}
+  .yes{background:#fff;color:#c2185b;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+  .yes:hover{transform:scale(1.12)}
+  .no{background:rgba(0,0,0,.35);color:#fff}
+  .no.run{position:fixed;transition:left .25s ease-out,top .25s ease-out}
+  #dots{position:fixed;bottom:18px;left:0;right:0;display:flex;gap:8px;justify-content:center}
+  #dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.4)}
+  #dots i.on{background:#fff;transform:scale(1.3)}
+</style>
+</head>
+<body>
+<div id="card"></div>
+<div id="dots"></div>
+
+<script>
+// EDIT ME: name + the 10 pages. `no` = text of the runaway button (omit for a single "Next" button).
+const NAME = "You";
+const pages = [
+  {e:"☕", t:`Hey ${NAME}…`, p:"I have something to say. Let's go for a coffee?", yes:"Yes!", no:"No"},
+  {e:"🥺", t:"First: I'm really sorry", p:"I messed up, and I know it. You deserve better than how I acted.", yes:"Go on…"},
+  {e:"🤔", t:"I've been thinking", p:"About what happened, about what I said, and mostly about how it made you feel.", yes:"Hmm, okay", no:"Not interested"},
+  {e:"🙈", t:"It was my fault", p:"No excuses, no \"but\". I should have listened. I'm learning to.", yes:"Fair"},
+  {e:"🧠", t:"What I'll do differently", p:"Listen first. Reply kinder. Stop being stubborn about silly things.", yes:"Sounds good", no:"Doubt it"},
+  {e:"🌟", t:"You matter a lot to me", p:"More than I showed. That's something I want to fix.", yes:"Aww"},
+  {e:"🍰", t:"I'll bribe you (a little)", p:"Coffee, cake, your favourite playlist. Pick any two.", yes:"Deal!", no:"Pass"},
+  {e:"🐶", t:"Look at this face", p:"This is me, sorry, with puppy eyes. It's hard to say no to these.", yes:"…Fine, forgiven-ish", no:"Still no"},
+  {e:"🤝", t:"Fresh start?", p:"Can we hit reset and try again, better this time?", yes:"Okay!", no:"Nope"},
+  {e:"🎉", t:"Thank you!", p:"I'm so happy. Coffee's on me. See you soon ☕💖", end:true},
+];
+
+const card = document.getElementById("card"), dots = document.getElementById("dots");
+let i = 0, noBtn = null;
+dots.innerHTML = pages.map(() => "<i></i>").join("");
+
+function show(n) {
+  i = n; noBtn = null;
+  const pg = pages[n];
+  card.style.animation = "none"; card.offsetWidth; card.style.animation = "";
+  card.innerHTML = `<div class="emoji">${pg.e}</div><h1>${pg.t}</h1><p>${pg.p}</p>
+    <div class="btns">${pg.end ? "" : `<button class="yes">${pg.yes}</button>`}${pg.no ? `<button class="no">${pg.no}</button>` : ""}</div>`;
+  [...dots.children].forEach((d, k) => d.classList.toggle("on", k === n));
+  const yes = card.querySelector(".yes");
+  if (yes) yes.onclick = () => show(n + 1);
+  noBtn = card.querySelector(".no");
+  if (noBtn) { noBtn.onclick = e => { e.preventDefault(); flee(innerWidth / 2, innerHeight / 2); }; }
+  if (pg.end) for (let k = 0; k < 40; k++) setTimeout(() => heart(["💖","🎉","☕","✨"][k % 4]), k * 80);
+}
+
+// Runaway button: jumps away whenever the pointer gets within 140px (also on touch).
+function flee(px, py) {
+  if (!noBtn) return;
+  const r = noBtn.getBoundingClientRect(), w = r.width, h = r.height;
+  noBtn.classList.add("run");
+  let x, y, tries = 0;
+  do { // random spot at least 250px from the pointer
+    x = Math.random() * (innerWidth - w - 20) + 10;
+    y = Math.random() * (innerHeight - h - 20) + 10;
+  } while (Math.hypot(x + w / 2 - px, y + h / 2 - py) < 250 && ++tries < 30);
+  noBtn.style.left = x + "px"; noBtn.style.top = y + "px";
+}
+addEventListener("pointermove", e => {
+  if (!noBtn) return;
+  const r = noBtn.getBoundingClientRect();
+  if (Math.hypot(r.left + r.width / 2 - e.clientX, r.top + r.height / 2 - e.clientY) < 140) flee(e.clientX, e.clientY);
+});
+addEventListener("pointerdown", e => { if (e.target === noBtn) flee(e.clientX, e.clientY); });
+
+function heart(s) {
+  const el = document.createElement("div");
+  el.className = "float"; el.textContent = s;
+  el.style.left = Math.random() * 100 + "vw";
+  el.style.animationDuration = 5 + Math.random() * 6 + "s";
+  document.body.appendChild(el); setTimeout(() => el.remove(), 11000);
+}
+setInterval(() => heart(["💗","✨","💕"][Math.random() * 3 | 0]), 700);
+
+show(0);
+</script>
+</body>
+</html>
